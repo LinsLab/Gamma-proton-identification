@@ -14,7 +14,7 @@ def catkflod(path,outname):
     n_repeats = 10  # 重复10次
     random_state = 42  # 随机种子，可选
     rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=random_state)
-    X=df12[['NuM4','NfiltM','base','NuM2','NuW1','NuM3','NhitM','NuM1']]
+    X=df12[['NfiltM', 'base', 'NuM2', 'NuM3-NuM2', 'NuM4-NuM1', 'NuM1-NuM3', 'NhitM', 'rec_Eage']]
     y=df12['lable']
     # 初始化StandardScaler
     scaler = StandardScaler()
@@ -39,11 +39,10 @@ def catkflod(path,outname):
         y_train, y_test = y[train_index], y[test_index]
         
         # 创建模型
-        # 创建XGBoost分类器
-        # 创建XGBoost分类器
+
         class_weights = compute_class_weight('balanced', classes=[0, 1], y=y_train)
         weights = {0: class_weights[0], 1: class_weights[1]}  
-        model = CatBoostClassifier(iterations=300,depth=10,learning_rate=0.1,random_strength=10,bagging_temperature=1,od_type='Iter',
+        model = CatBoostClassifier(iterations=300,depth=10,learning_rate=0.1,random_strength=10,bagging_temperature=0.9,od_type='IncToDec',
                                    od_wait=50,class_weights=weights, verbose=0, eval_metric='Accuracy')
         # 训练模型
         model.fit(X_train, y_train)
@@ -78,9 +77,9 @@ def catkflod(path,outname):
             best_y_test, best_y_pred, best_y_prob = best_result[1:]
             best_model = max(repeat_models, key=lambda x: x[0])[1]
             # 保存最佳模型
-            dump(best_model, f'/home/abcdlj/Gam-p/final/models/CAT_{outname}_best_model_{int((i+1)/n_splits)}.joblib') 
+            dump(best_model, f'/home/abcdlj/drive1/Gam-p/LHAASO/models/CAT_{outname}_best_model_{int((i+1)/n_splits)}.joblib') 
             df_best = pd.DataFrame({'y_test': best_y_test, 'y_pred': best_y_pred, 'y_prob': best_y_prob})
-            df_best.to_csv(f'/home/abcdlj/Gam-p/final/predict/CAT_{outname}_best_{int((i+1)/n_splits)}.csv', index=False)
+            df_best.to_csv(f'/home/abcdlj/drive1/Gam-p/LHAASO/predict/CAT_{outname}_best_{int((i+1)/n_splits)}.csv', index=False)
             
             repeat_results = []
             repeat_models = []
@@ -93,14 +92,9 @@ def catkflod(path,outname):
         'Recall': rec,
         'AUC': a
     })
-    df_scores.to_csv('/home/abcdlj/Gam-p/final/predict/CAT_{}_results.csv'.format(outname), index=False)           
+    df_scores.to_csv('/home/abcdlj/drive1/Gam-p/LHAASO/predict/CAT_{}_results.csv'.format(outname), index=False)           
 
 if __name__=="__main__":
-    #path1='/home/abcdlj/Gam-p/final/data/df15rec.csv'
-    #catkflod(path1,'df15')
-    path2='/home/abcdlj/Gam-p/final/data/df14rec.csv'
-    catkflod(path2,'df14')
-    path3='/home/abcdlj/Gam-p/final/data/df13rec.csv'
-    catkflod(path3,'df13')
-    path4='/home/abcdlj/Gam-p/final/data/df12rec.csv'
-    catkflod(path4,'df12')
+    path4='/home/abcdlj/Gam-p/lhaaso/df15rec_Npw_drop_log1_NuW.csv'
+    outname4='df15'
+    catkflod(path4,outname4)
